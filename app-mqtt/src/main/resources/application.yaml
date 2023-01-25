@@ -1,0 +1,97 @@
+spring:
+  profiles:
+    group:
+      "local": "local_config,common"
+      "dev":  "dev_config,common"
+      "prod": "prod_config,common"
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: "common"
+
+# local, dev, prod 공통 설정
+#server:
+#  port: 8080
+#  uri-encoding: UTF-8
+
+---
+
+database: local_db
+
+spring:
+  config:
+    activate:
+      on-profile: "local_config"
+  datasource:
+#    schema: classpath*:db/${database}/schema.sql
+#    data: classpath*:db/${database}/data.sql
+#    initialization-mode: always
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:13306/wizlab?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul
+    username: user01
+    password: user01@mysql
+  jpa:
+    show-sql: true
+    defer-datasource-initialization: true
+    hibernate:
+      # never use create/ceate-drop/update in prod server, only use validate or none in prod server
+      # only use create or update in development
+      # can use update or validate in test server
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
+  output:
+    ansi:
+      enabled: always
+
+logging:
+  level:
+    org.springframework.web.client: DEBUG
+    # org.hibernate.SQL: DEBUG
+    org.hibernate.type: trace
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: "dev_config"
+  datasource:
+    url: "jdbc:mysql://dev-server/dev"
+    username: "root"
+    password: ""
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: "prod_config"
+  datasource:
+    url: "jdbc:mysql://prod-server/prod"
+    username: "root"
+    password: ""
+
+##------------------------------------------------------------ MQTT [[
+# QoS (Quality of Service)
+# MQTT? ???? ???? ???? ?? ??, ???? ???, ??? ???? ? ????? ?? ???? ??? ? ??? 3?? QoS(Quality of Service) ? ?????.
+# 0 : ???? ??? ????, ????? ???? ???. Fire and Forget ????.
+# 1 : ???? ??? ?? ?? ????. ??? ???? ????? ??? ???? ???? ?? ???, ????? ?? ??.
+# 2 : ???? ??? ????. ???? ????? ??? ????. ?? ??? ????? ??? ??? ???.
+
+#mqtt.pub.qos=1
+#mqtt.pub.client.id=mqttPubClient
+#mqtt.pub.topic.name=/sensor/val/
+
+#mqtt.sub.qos=2
+#mqtt.sub.client.id=mqttSubClient
+#mqtt.sub.topic.name=/sensor/#
+#mqtt.sub.worker.count=4
+##------------------------------------------------------------ MQTT ]]

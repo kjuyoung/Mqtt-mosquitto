@@ -1,0 +1,15 @@
+bootJar {
+    enabled = true
+    archivesBaseName = 'app_api'
+    archiveFileName = 'app_api.jar'
+}
+
+jar {
+    enabled = false
+}
+
+dependencies {
+    implementation project(':mod-common')
+
+    implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+}

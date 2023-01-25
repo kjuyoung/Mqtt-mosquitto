@@ -1,0 +1,178 @@
+version: '3.7'
+
+# docker-compose 가 실행될 때 사용할 docker container network 설정
+#   아래의 경우 wizlab bridge 네트워크를 선언한 것이며, services 의 docker container 에서
+#   networks:
+#     - wizlab
+#   으로 선언하면, 해당 networks 내에서 container_name 으로 서로 연동할 수 있음
+networks:
+  wizardlab:
+    driver: bridge
+# 도커 컨테이너 서비스를 선언
+# ports 설정 시 반드시 "16379:6379" 와 같이 따옴표 사용해야 하며, ports 는 docker-compose up 시 사용됨
+#   docker-compose run 시 --service-ports 를 사용
+# expose 는 호스트 OS 에 공개하지 않고, 컨테이너에 포트 공개함. 컨테이너에서 link 로 연결된 경우에만 통신 가능
+# depends_on 은 서비스간 종속성 순서대로 서비스를 시작하도록 함
+# environment 은 dockerfile 의 env 와 같이 컨테이너 환경 변수를 지정해 줄 수 있음
+# env_file 은 docker-compose 가 아닌 다른 파일에 지정할 환경 변수를 설정하는 경우 사용
+# container_name 은 컨테이너 이름을 지정해 줌
+# labels 이미지 구성이나 라이센스 기록, 컨테이너, 볼륨 및 네트워크간의 관계에 주석을 달거나 할때에 사용 됩니다.
+#   라벨은 키-값 쌍이며 문자열로 저장 됩니다. 여러개의 라벨을 지정할 수 있지만 각각의 키-값 쌍은 유일해야 하며,
+#   만약 동일한 키에 여러 값이 작성되면 가장 최근에 작성된 값이 이전 모든 값을 덮어 씁니다.
+#   일반적으로 다른 S/W의 라벨과 중복되어 겹치는 일이 없도록 역 DNS 표기법을 사용하여 코멘트를 달아놓습니다.
+#   예)  lablees:
+#          com.example.description: "dev nginx"
+#          com.example.department: "Devops"
+# volumes dockerfile에서 사용되던 volume과 같이 컨테이너에 볼륨을 마운트 할 때 사용
+#   host:container 방식으로 사용되고 마지막에 :ro 를 추가하여 볼륨을 읽기 전용으로 사용
+# image 베이스 이미지를 지정. docker build를 할 때와 마찬가지로 베이스 이미지가 로컬 환경에 없다면
+#   Docker hub에서 다운로드하여 베이스 이미지로 사용되고, 로컬 환경에 있다면 그 이미지를 베이스 이미지로 사용
+# build Dockerfile을 이용해 자동으로 docker build 후 베이스 이미지로 사용. Dockerfile 에 변수를 전달하려면 아래 예처럼 사용
+#   build:
+#     args:
+#       number: 1
+#   docker-compose.yml 파일에 위와 같이 설정되어 있다면 Dockerfile 의 ARG number 에 사용할 값을 전달하게 됨
+# command 는 Dockerfile 의 CMD, ENTRYPOINT 와 거의 같고, dockerfile 의 entrypoint 보다 docker-compose 의 우선순위가 높음
+# links 는 컨테이너를 서로 연결하는 역할이나 권장하지 않고 있으며, network 설정을 통해 연결하거나 volume 설정으로 연결
+#
+services:
+  mysql-srv:
+    # platform: linux/x86_64
+    image: mysql:latest # container base image, 5.7.40-oracle
+    container_name: mysql-srv
+    networks:
+      - wizardlab
+    # hostname: mysql-server
+    ports: # -p 와 동일
+      - '${FORWARD_DB_PORT}:3306' # spring.datasource.url=jdbc:mysql://mysql-srv:3306/studio?useSSL=false&allowPublicKeyRetrieval=true
+    environment: # 해당 docker image 의 환경 변수를 설정
+      # DB_ROOT_PASSWORD: myroot@mysql
+      # DB_USER: user01
+      # DB_USER_PASSWORD: user01@mysql
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: wizlab
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD}
+      TZ: Asiz/Seoul
+    volumes: # -v 옵션과 동일
+      # init.sql 저장되어 있는 volume
+      # - D:/dockerlab/wizardlab/docker/mysql/mysql-init.d:/docker-entrypoint-initdb.d
+      # - D:/dockerlab/wizardlab/docker/mysql/db:/var/lib/mysql
+      # - D:/dockerlab/wizardlab/data/mysql/mysql-files:/var/lib/mysql-files
+      # - D:/dockerlab/wizardlab/data/mysql/config:/etc/mysql
+    command: # container 가 실행될 때 함께 실행할 명령어를 정의
+      - '--character-set-server=utf8mb4'
+      - '--collation-server=utf8mb4_unicode_ci'
+    # restart: always   # container down 시 재시작하라는 명령어
+
+  # adminer-srv: # database adminer
+  #   image: adminer:latest
+  #   container_name: adminer-srv
+  #   networks:
+  #     - wizardlab
+  #   ports:
+  #     - '18080:8080'
+  #   environment:
+  #     ADMINER_DEFAULT_SERVER: mysql-srv
+  #     ADMINER_DESIGN: hydra
+  #     ADMINER_PLUGINS: tables-filter tinymce
+
+  redis-srv:
+    image: redis:latest
+    container_name: redis-srv
+    networks:
+      - wizardlab
+    # hostname: redis-server
+    ports:
+      - '${FORWARD_REDIS_PORT}:6379' # application.properties 의 spring.redis.port=16379 로 설정
+    command: # container 가 실행될 때 함께 실행할 명령어를 정의
+      - /bin/bash
+      - -c
+      - redis-server --bind redis-srv --requirepass ${REDIS_PASSWORD} --maxmemory 1000mb
+      # - redis-server --bind redis-srv --maxmemory 1000mb
+      # - Double dollars, so that the variable is not expanded by Docker Compose
+      # - Surround by quotes, so that the shell does not split the password
+      # - The ${variable:?message} syntax causes shell to exit with a non-zero
+      #   code and print a message, when the variable is not set or empty
+      # - redis-server --bind redis-srv --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}" --maxmemory 300mb
+    labels:
+      - 'name=redis'
+      - 'mode=standalone'
+    volumes:
+      # - D:/dockerlab/wizardlab/docker/redis:/home/user/data/redis
+      # - D:/dockerlab/wizardlab/docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  backend-srv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-srv
+    image: app-api
+    links:
+      - mysql-srv
+      - redis-srv
+    # restart: always
+    depends_on:
+      - redis-srv
+      - mysql-srv
+    # restart: on-failure
+    # platform: linux/x86_64
+    networks:
+      - wizardlab
+    # hostname: backend-server
+    ports: # -p 와 동일
+      - '8080:8080' # application properties 의 spring.datasource.url=jdbc:mysql://localhost:13306/studio?useSSL=false&allowPublicKeyRetrieval=true
+    # command:            # container 가 실행될 때 함께 실행할 명령어를 정의
+    #   - /bin/bash
+    #   - -c
+    #   - java -jar
+    expose:
+      - 8080
+    # restart: always   # container down 시 재시작하라는 명령어
+    volumes: # -v 옵션과 동일
+      - ../log:/var/log
+      - ../logs:/var/logs
+    environment:
+      # SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/tpms?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul
+      # SPRING_DATASOURCE_USERNAME: root
+      # SPRING_DATASOURCE_PASSWORD: 1234
+      DB_HOST: mysql-srv
+      REDIS_HOST: redis-srv
+      # - jasypt.encryptor.password=${JASYPT_PASSWORD}
+    env_file:
+      - .env.dev
+
+  # web:
+  #   container_name: web
+  #   build:
+  #     context: ./
+  #     dockerfile: Dockerfile.prod
+  #   command: gunicorn myplanit.wsgi:application --bind 0.0.0.0:8000
+  #   environment:
+  #     DJANGO_SETTINGS_MODULE: myplanit.settings.prod
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - static:/home/app/web/static
+  #     - media:/home/app/web/media
+  #   expose:
+  #     - 8000
+  #   entrypoint:
+  #     - sh
+  #     - config/docker/entrypoint.prod.sh
+
+  # nginx:
+  #   container_name: nginx
+  #   build: ./config/nginx
+  #   volumes:
+  #     - static:/home/app/web/static
+  #     - media:/home/app/web/media
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - web       # connect to "web" container
+
+  # volumes:
+  #   static:
+  #   media:

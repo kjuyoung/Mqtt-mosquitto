@@ -1,0 +1,156 @@
+// plugins {
+// 	id 'java'
+// 	id 'org.springframework.boot' version '2.7.5'
+// 	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+// }
+
+// group = 'com.wizlab'
+// version = '0.0.1-SNAPSHOT'
+// sourceCompatibility = '17'
+
+// configurations {
+// 	compileOnly {
+// 		extendsFrom annotationProcessor
+// 	}
+// }
+
+// subprojects {
+//     group = 'com.wizlab.test_mqtt_sub'
+
+//     repositories {
+//         mavenCentral()
+//     }
+// }
+
+// bootJar {
+// 	archivesBaseName = 'TestMQTT_SubSub'
+// 	archiveFileName = 'TestMQTT_Sub.jar'
+// 	archiveVersion = '0.0.1'
+// }
+// jar {
+// 	enabled = false
+// }
+
+// repositories {
+// 	mavenCentral()
+// }
+
+// dependencies {
+// 	implementation 'org.springframework.boot:spring-boot-starter-integration'
+// 	implementation 'org.springframework.boot:spring-boot-starter-web'
+// //	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.0.0'
+// 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.6'
+// 	implementation 'org.springframework.integration:spring-integration-http'
+// 	compileOnly 'org.projectlombok:lombok'
+// 	runtimeOnly 'com.h2database:h2'
+// 	annotationProcessor 'org.projectlombok:lombok'
+// 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+// 	testImplementation 'org.springframework.integration:spring-integration-test'
+// 	implementation 'org.javassist:javassist:3.29.2-GA'
+
+// 	// MQTT
+// 	implementation 'org.springframework.integration:spring-integration-mqtt:6.0.0'
+// 	implementation 'com.google.code.gson:gson:2.10'
+
+// 	// Mysql
+// 	implementation 'mysql:mysql-connector-java'
+
+// 	// SSL for self signed certificate
+// 	implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+// }
+
+// tasks.named('test') {
+// 	useJUnitPlatform()
+// }
+
+// compileJava.options.encoding = 'UTF-8'
+// tasks.withType(JavaCompile) {
+// 	options.encoding = 'UTF-8'
+// }
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.6'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+repositories {
+    mavenCentral()
+}
+
+bootJar.enabled = false
+
+// 하위 모든 프로젝트 공통 세팅
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    group 'com.wizlab'
+    version '0.0.1-SNAPSHOT'
+
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+    compileJava.options.encoding = 'UTF-8'
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    // 하위 모듈에서 공통으로 사용하는 세팅 추가
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-integration'
+        implementation 'org.springframework.integration:spring-integration-jpa:5.5.15'
+        implementation 'org.springframework.integration:spring-integration-http'
+
+        implementation group: 'javax.persistence', name: 'javax.persistence-api', version: '2.2'
+        implementation 'javax.validation:validation-api:2.0.1.Final'
+
+
+		compileOnly 'org.projectlombok:lombok'
+		runtimeOnly 'com.h2database:h2'
+		annotationProcessor 'org.projectlombok:lombok'
+
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testImplementation 'org.springframework.integration:spring-integration-test'
+		implementation 'org.javassist:javassist:3.29.2-GA'
+
+		// JPA, Mysql
+		implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.0.0'
+		implementation 'mysql:mysql-connector-java'
+        implementation 'org.hibernate:hibernate-entitymanager:5.6.14.Final'
+        // implementation 'org.hibernate.validator:hibernate-validator:6.2.5.Final'
+        // implementation 'org.hibernate.common:hibernate-commons-annotations:5.1.2.Final'
+        // implementation 'org.hibernate.orm:hibernate-core:6.1.5.Final'
+
+        // REST API
+        implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '3.0.0'
+        implementation group: 'org.springframework.boot', name: 'spring-boot-starter-hateoas', version: '2.7.6'
+        // implementation group: 'org.springframework.hateoas', name: 'spring-hateoas', version: '2.0.0'
+
+        implementation 'org.modelmapper:modelmapper:3.1.0'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}
+
+// 각 프로젝트에서만 사용하는 의존성 추가
+// project(':app-mqtt') {
+//     dependencies {
+//         // implementation project ':mod-common'
+//     }
+// }
+
+// project(':app-api') {
+//     dependencies {
+//         // implementation 'io.springfox:springfox-swagger-ui:3.0.0'
+//     }
+// }

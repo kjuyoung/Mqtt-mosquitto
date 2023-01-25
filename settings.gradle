@@ -1,0 +1,5 @@
+rootProject.name = 'testmqtt'
+
+include 'app-mqtt'
+include 'app-api'
+include 'mod-common'

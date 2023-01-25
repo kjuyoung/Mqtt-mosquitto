@@ -1,0 +1,24 @@
+bootJar {
+    enabled = true
+    archivesBaseName = 'app_mqtt'
+    archiveFileName = 'app_mqtt.jar'
+}
+
+jar {
+    enabled = false
+}
+
+dependencies {
+    implementation project(':mod-common')
+
+    // MQTT
+    implementation 'org.springframework.integration:spring-integration-mqtt:6.0.0'
+
+    // SSL for self signed certificate
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+
+    // Jackson
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.14.1'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.14.1'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.14.1'
+}
