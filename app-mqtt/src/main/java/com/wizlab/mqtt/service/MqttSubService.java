@@ -14,8 +14,6 @@ import com.wizlab.common.repository.MqttRepository;
 public class MqttSubService {
 
     private final MqttRepository mqttRepository;
-    // private final JpaConfig jpaConfig;
-    // private final JpaConfig.persistJpaGateway gateway;
 
     @Transactional
     public void saveTpms(TpmsEntity tpms) {
